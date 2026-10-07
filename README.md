@@ -1,22 +1,48 @@
-# QA Automation Project 1: Web Testing with Selenium
+# Selenium UI Test Automation — Sauce Demo
 
-Automates functional tests for [Sauce Demo](https://www.saucedemo.com/) using Python and Selenium WebDriver.
+[![UI Tests](https://github.com/AlAmin870/qa-automation-project-1/actions/workflows/tests.yml/badge.svg)](https://github.com/AlAmin870/qa-automation-project-1/actions/workflows/tests.yml)
 
-## Setup
-1. Install Python 3.x and Selenium: `pip install selenium`.
-2. Install ChromeDriver 133.0.6943.98 and add to PATH.
-3. (Optional) Install PyTest: `pip install pytest`.
-4. Run tests: `python tests/test_sauce.py` or `pytest tests/test_sauce.py -v`.
+End-to-end UI tests for the [Sauce Demo](https://www.saucedemo.com/) e-commerce site, written in **Python + Selenium WebDriver + PyTest** using the **Page Object Model**. Tests run headless on every push through GitHub Actions.
 
-## Tests
-- **Valid Login:** Logs in with `standard_user/secret_sauce`.
-- **Invalid Login:** Verifies error with wrong credentials.
-- **Add to Cart:** Adds a backpack to the cart.
-- **Remove from Cart:** Removes the item.
-- **Checkout:** Completes a purchase flow.
+## What's covered (11 tests)
 
-## Sample Output
-![Login Success](login_success.png)
+| Area | Scenarios |
+|---|---|
+| Login | Valid login; invalid credentials, locked-out user, empty username, empty password (data-driven with `pytest.mark.parametrize`) |
+| Cart | Add one item, add multiple items, remove item, sort products by price (low → high) |
+| Checkout | Full purchase flow with item-total check; required-field validation on postal code |
 
-## Results
-All 5 tests passed using PyTest on Chrome 133.0.6943.142.
+## Framework design
+
+- **Page Object Model** — locators and page actions live in `pages/`, so tests read like user steps and a UI change is fixed in one place.
+- **Explicit waits** — `BasePage` wraps `WebDriverWait`; there is no `time.sleep()` anywhere.
+- **Fixtures** — `driver` opens and always closes the browser (even on failure); `logged_in` reuses the login step.
+- **Screenshot on failure** — a PyTest hook saves a screenshot to `reports/screenshots/` for any failed test.
+- **HTML report** — `pytest-html` writes `reports/report.html`; CI uploads it as a build artifact.
+- **No driver setup** — Selenium Manager downloads the matching ChromeDriver automatically.
+
+```
+├── pages/                 # Page objects
+│   ├── base_page.py       # Explicit-wait helpers
+│   ├── login_page.py
+│   ├── inventory_page.py
+│   └── checkout_page.py
+├── tests/
+│   ├── test_login.py
+│   ├── test_cart.py
+│   └── test_checkout.py
+├── conftest.py            # Browser fixture, login fixture, screenshot hook
+├── pytest.ini
+├── requirements.txt
+└── .github/workflows/tests.yml
+```
+
+## Run locally
+
+```bash
+pip install -r requirements.txt
+pytest                      # headless, report at reports/report.html
+HEADLESS=false pytest       # watch the browser
+```
+
+Requires Python 3.10+ and Google Chrome.
